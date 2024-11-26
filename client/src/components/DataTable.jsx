@@ -1,6 +1,25 @@
-import { Table } from 'antd';
+import { Table, Flex, Button, Tag } from 'antd';
 
-export default function DataTable({ data }) {
+export default function DataTable({
+  data,
+  isLoading,
+  setEditUserModalOpen,
+  setEditUser,
+  setDeleteUserModalOpen,
+  setDeleteUser,
+}) {
+  const openEditModal = (id) => {
+    const user = data?.find((u) => u.id === id);
+    setEditUser(user);
+    setEditUserModalOpen(true);
+  };
+
+  const openDeleteModal = (id) => {
+    const user = data?.find((u) => u.id === id);
+    setDeleteUser(user);
+    setDeleteUserModalOpen(true);
+  };
+
   const columns = [
     {
       title: 'Usuario',
@@ -21,16 +40,38 @@ export default function DataTable({ data }) {
       title: 'Estado',
       dataIndex: 'status',
       key: 'status',
+      render: (_, { status }) => (
+        <>
+          {status === 'active' && <Tag color='green'>Activo</Tag>}
+          {status === 'inactive' && <Tag color='volcano'>Inactivo</Tag>}
+        </>
+      ),
     },
     {
       title: 'Acciones',
-      dataIndex: 'acciones',
-      key: 'acciones',
+      key: 'actions',
+      render: (_, { id }) => (
+        <Flex gap={8}>
+          <Button
+            color='primary'
+            variant='link'
+            onClick={() => openEditModal(id)}
+          >
+            Editar
+          </Button>
+          <Button
+            color='primary'
+            variant='link'
+            onClick={() => openDeleteModal(id)}
+          >
+            Eliminar
+          </Button>
+        </Flex>
+      ),
     },
   ];
   return (
     <Table
-      bordered
       columns={columns}
       dataSource={data}
       style={{
@@ -38,9 +79,13 @@ export default function DataTable({ data }) {
         boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
         borderRadius: '5px',
       }}
+      tableLayout='fixed'
       pagination={{
         position: 'bottom-right',
+        defaultPageSize: 9,
+        showSizeChanger: false,
       }}
+      loading={isLoading}
     />
   );
 }

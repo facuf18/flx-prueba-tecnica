@@ -1,117 +1,120 @@
 import { useEffect, useState } from 'react';
 import DataTable from './components/DataTable';
-import logo from '/logo.png';
 import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
-import { Breadcrumb, Flex, Input, Select, Button } from 'antd';
-
-const { Search } = Input;
+import { Breadcrumb, Flex, Button } from 'antd';
+import SearchBox from './components/SearchBox';
+import FilterSelect from './components/FilterSelect';
+import Header from './components/Header';
+import { addKey } from './utils/utils';
+import AddUserModal from './components/addUserModal';
+import EditUserModal from './components/EditUserModal';
+import DeleteUserModal from './components/DeleteUserModal';
 
 function App() {
   const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [addUserModalOpen, setAddUserModalOpen] = useState(false);
+  const [editUserModalOpen, setEditUserModalOpen] = useState(false);
+  const [deleteUserModalOpen, setDeleteUserModalOpen] = useState(false);
+
+  const [editUser, setEditUser] = useState(null);
+  const [deleteUser, setDeleteUser] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios({
-          method: 'GET',
-          url: 'http://localhost:4000/users',
+    setIsLoading(true);
+    setTimeout(() => {
+      axios
+        .get('http://localhost:4000/users')
+        .then((response) => {
+          if (response) {
+            setData(addKey(response?.data));
+            setIsLoading(false);
+          }
+        })
+        .catch((error) => {
+          throw new Error(error);
         });
-        if (response) {
-          const parsedData = response?.data?.map((user) => {
-            return {
-              key: uuidv4(),
-              ...user,
-            };
-          });
-          setData(parsedData);
-        }
-      } catch (error) {
-        throw new Error(error);
-      }
-    };
-    fetchData();
+    }, 2000);
   }, []);
 
-  console.log(data);
-
   return (
-    <main
-      style={{
-        backgroundColor: '#f4f4f5',
-        minHeight: '100vh',
-      }}
-    >
-      {/* Header */}
-      <Flex
-        align='center'
-        justify='flex-start'
+    <>
+      <main
         style={{
-          height: 90,
-          backgroundColor: '#d9d8d8',
-          paddingLeft: 60,
+          backgroundColor: '#f4f4f5',
+          minHeight: '100vh',
+          paddingBottom: '24px',
         }}
       >
-        <img src={logo} alt='logo_flexxus' />
-      </Flex>
+        {/* Header */}
+        <Header />
 
-      {/* Container */}
-      <Flex
-        vertical
-        gap={20}
-        justify='center'
-        align='start'
-        style={{
-          marginLeft: 98,
-          marginRight: 98,
-          marginTop: 24,
-        }}
-      >
-        {/* Breadcrumb */}
-        <Breadcrumb>
-          <Breadcrumb.Item>Usuarios</Breadcrumb.Item>
-          <Breadcrumb.Item>Listado de usuarios</Breadcrumb.Item>
-        </Breadcrumb>
-
+        {/* Container */}
         <Flex
-          justify='space-between'
-          align='center'
+          vertical
+          gap={20}
+          justify='center'
+          align='start'
           style={{
-            width: '100%',
+            marginLeft: 98,
+            marginRight: 98,
+            marginTop: 24,
           }}
         >
-          <Flex justify='flex-start' gap={16}>
-            <Search
-              placeholder='Buscar usuarios'
-              allowClear
-              size='large'
-              style={{
-                width: 290,
-              }}
-            />
-            <Select
-              placeholder='Filtrar por estado'
-              size='large'
-              style={{
-                width: 210,
-              }}
-            />
-          </Flex>
-          <Button
-            type='primary'
-            size='large'
+          {/* Breadcrumb */}
+          <Breadcrumb
+            items={[{ title: 'Usuarios' }, { title: 'Listado de usuarios' }]}
+          />
+
+          {/* Search, Filter and Add */}
+          <Flex
+            justify='space-between'
+            align='center'
             style={{
-              width: 138,
+              width: '100%',
             }}
           >
-            Agregar usuario
-          </Button>
-        </Flex>
+            <Flex justify='flex-start' gap={16}>
+              <SearchBox setData={setData} setIsLoading={setIsLoading} />
+              <FilterSelect setData={setData} setIsLoading={setIsLoading} />
+            </Flex>
+            <Button
+              type='primary'
+              style={{
+                width: 138,
+              }}
+              onClick={() => setAddUserModalOpen(!addUserModalOpen)}
+            >
+              Agregar usuario
+            </Button>
+          </Flex>
 
-        {/* Table */}
-        <DataTable data={data} />
-      </Flex>
-    </main>
+          {/* Table */}
+          <DataTable
+            data={data}
+            isLoading={isLoading}
+            setEditUserModalOpen={setEditUserModalOpen}
+            setEditUser={setEditUser}
+            setDeleteUserModalOpen={setDeleteUserModalOpen}
+            setDeleteUser={setDeleteUser}
+          />
+        </Flex>
+      </main>
+
+      {/* Modals */}
+      <AddUserModal open={addUserModalOpen} setOpen={setAddUserModalOpen} />
+      <EditUserModal
+        open={editUserModalOpen}
+        setOpen={setEditUserModalOpen}
+        user={editUser}
+      />
+      <DeleteUserModal
+        open={deleteUserModalOpen}
+        setOpen={setDeleteUserModalOpen}
+        user={deleteUser}
+      />
+    </>
   );
 }
 
